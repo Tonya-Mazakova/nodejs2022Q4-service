@@ -6,3 +6,7 @@ export interface User {
   createdAt: number; // timestamp of creation
   updatedAt: number; // timestamp of last update
 }
+
+export interface IUsers {
+  [index: string]: User
+}
