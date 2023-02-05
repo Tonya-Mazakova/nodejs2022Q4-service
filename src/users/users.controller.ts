@@ -10,106 +10,45 @@ import {
   HttpCode,
   HttpException,
   HttpStatus,
-  ParseUUIDPipe
+  ParseUUIDPipe,
+  Header,
 } from '@nestjs/common';
 import { CreateUserDto, UpdatePasswordDto } from './users.dto';
-import { User } from './users.interface';
 import { DataSourceService } from '../dataSource/dataSource.service';
-import { ErrorMessages } from '../constants';
+import { UsersService } from './users.service';
 
 @Controller('user')
 export class UsersController {
-  constructor(private readonly dataStoreService: DataSourceService) {}
-
-  payload
+  constructor(
+    private readonly dataStoreService: DataSourceService,
+    private readonly usersService: UsersService
+  ) {}
 
   @Get()
   async findAll(): Promise<any> {
-    return await this.dataStoreService.findAll();
+    return await this.usersService.findAll();
   }
 
   @Get(':uuid')
   async findOne(@Param('uuid', new ParseUUIDPipe()) id: string) {
-    const user = await this.dataStoreService.findByID(id);
-
-    if (!user) {
-      throw new HttpException(
-        ErrorMessages.NOT_FOUND,
-        HttpStatus.NOT_FOUND
-      );
-    } else {
-      return this.payload = { status: HttpStatus.OK, data: user }
-    }
+    return await this.usersService.findByID(id);
   }
 
   @Post()
-  async createUser(@Body() createUserDto: CreateUserDto) {
-   const user = {
-     ...createUserDto,
-     id: uuid(),
-     version: 1,
-     createdAt: Date.now(),
-     updatedAt: Date.now()
-   } as User;
-
-    try {
-      const data = await this.dataStoreService.createUser(user);
-      this.payload = { status: HttpStatus.CREATED, data };
-    } catch (e) {
-      throw new HttpException(
-        ErrorMessages.SERVER_ERROR,
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    }
-
-    return this.payload
+  @Header('Content-Type', 'application/json')
+  async create(@Body() createUserDto: CreateUserDto) {
+    return await this.usersService.create(createUserDto);
   }
 
   @Put(':uuid')
-  async updateUser(@Param('uuid', new ParseUUIDPipe()) id: string, @Body() updatePasswordDto: UpdatePasswordDto) {
-    const user = await this.dataStoreService.findByID(id) as User;
-
-    if (!user) {
-      throw new HttpException(
-        ErrorMessages.NOT_FOUND,
-        HttpStatus.NOT_FOUND
-      );
-    }
-
-    if (updatePasswordDto.oldPassword !== user.password) {
-      throw new HttpException(
-        ErrorMessages.PASSWORD_ERROR,
-        HttpStatus.FORBIDDEN
-      );
-    }
-
-    try {
-      this.payload =
-        await this.dataStoreService.updateByID(id, {
-          password: updatePasswordDto.newPassword
-        });
-    }catch (e) {
-      throw new HttpException(
-        ErrorMessages.SERVER_ERROR,
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    }
-
-    return this.payload;
+  @Header('Content-Type', 'application/json')
+  async update(@Param('uuid', new ParseUUIDPipe()) id: string, @Body() updatePasswordDto: UpdatePasswordDto) {
+    return await this.usersService.updateByID(id, updatePasswordDto);
   }
 
   @Delete(':uuid')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteUser(@Param('uuid', new ParseUUIDPipe()) id: string) {
-    const user = await this.dataStoreService.findByID(id);
-
-    if (!user) {
-      throw new HttpException(
-        ErrorMessages.NOT_FOUND,
-        HttpStatus.NOT_FOUND
-      );
-    } else {
-      return await this.dataStoreService.deleteByID(id);
-    }
+  async delete(@Param('uuid', new ParseUUIDPipe()) id: string) {
+    return await this.usersService.deleteByID(id);
   }
 }
