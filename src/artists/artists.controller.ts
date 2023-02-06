@@ -1,10 +1,10 @@
 import { v4 as uuid } from 'uuid';
 import {
   Body,
-  Controller, Delete,
+  Controller,
+  Delete,
   Get,
   HttpCode,
-  HttpException,
   HttpStatus,
   Param,
   ParseUUIDPipe,
