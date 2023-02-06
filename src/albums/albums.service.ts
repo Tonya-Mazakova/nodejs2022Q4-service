@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable, Inject, forwardRef } from '@nest
 import { DataSourceService } from '../dataSource/dataSource.service';
 import { Album } from './albums.interface';
 import { v4 as uuid } from 'uuid';
-import { ErrorMessages } from '../constants';
+import { ErrorMessages, DataSourceTypes } from '../constants';
 import { TracksService } from '../tracks/tracks.service';
 import { Track } from '../tracks/tracks.interface';
 import { FavoritesService } from '../favorites/favorites.service';
@@ -83,14 +83,14 @@ export class AlbumsService {
         }
       });
 
-    if (await this.favoritesService.isFavHasId(id, 'albums')) {
-      await this.favoritesService.delete(id, 'albums');
+    if (await this.favoritesService.isAddedInFavs(id, DataSourceTypes.Albums)) {
+      await this.favoritesService.delete(id, DataSourceTypes.Albums);
     }
 
     return delete this.dataStoreService.albums[id];
   }
 
-  public async hasEntityByID(id: string): Promise<Album | undefined> {
-    return await this.dataStoreService.albums[id];
+  public async hasEntityByID(id: string): Promise<boolean> {
+    return await !!this.dataStoreService.albums[id];
   }
 }

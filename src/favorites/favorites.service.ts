@@ -3,7 +3,8 @@ import { DataSourceService } from '../dataSource/dataSource.service';
 import { TracksService } from '../tracks/tracks.service';
 import { ArtistsService } from '../artists/artists.service';
 import { AlbumsService } from '../albums/albums.service';
-import { ErrorMessages } from '../constants';
+import { ErrorMessages, DataSourceTypes } from '../constants';
+import { FavoritesResponse } from './favorites.interface';
 
 @Injectable()
 export class FavoritesService {
@@ -23,7 +24,7 @@ export class FavoritesService {
     albums: this.albumsService
   }
 
-  public async findAll(): Promise<any> {
+  public async findAll(): Promise<FavoritesResponse> {
     const tracks = await this.tracksService.findAll();
     const artists = await this.artistsService.findAll();
     const albums = await this.albumsService.findAll();
@@ -50,11 +51,11 @@ export class FavoritesService {
     }
   }
 
-  public async add(id: string, service): Promise<any> {
-    const isExist = await this.services[service].hasEntityByID(id);
+  public async add(id: string, serviceType: DataSourceTypes): Promise<any> {
+    const isExist = await this.services[serviceType].hasEntityByID(id);
 
     if (isExist) {
-      this.dataStoreService.favorites[service].push(id);
+      this.dataStoreService.favorites[serviceType].push(id);
     } else {
       throw new HttpException(
         ErrorMessages.UNPROCESSABLE_ENTITY,
@@ -75,10 +76,11 @@ export class FavoritesService {
 
     this.dataStoreService.favorites[type] =
       [...this.dataStoreService.favorites[type]]?.filter((itemID: string) => itemID !== id)
-    return
+
+    return true
   }
 
-  public async isFavHasId(id: string, type): Promise<boolean> {
+  public async isAddedInFavs(id: string, type): Promise<boolean> {
     return await this.dataStoreService.favorites[type].includes(id)
   }
 }

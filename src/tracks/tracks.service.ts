@@ -2,7 +2,7 @@ import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nest
 import { DataSourceService } from '../dataSource/dataSource.service';
 import { Track } from './tracks.interface';
 import { v4 as uuid } from 'uuid';
-import { ErrorMessages } from '../constants';
+import { ErrorMessages, DataSourceTypes } from '../constants';
 import { FavoritesService } from '../favorites/favorites.service';
 
 @Injectable()
@@ -71,14 +71,14 @@ export class TracksService {
       );
     }
 
-    if (await this.favoritesService.isFavHasId(id, 'tracks')) {
-      await this.favoritesService.delete(id, 'tracks');
+    if (await this.favoritesService.isAddedInFavs(id, DataSourceTypes.Tracks)) {
+      await this.favoritesService.delete(id, DataSourceTypes.Tracks);
     }
 
     return delete this.dataStoreService.tracks[id];
   }
 
-  public async hasEntityByID(id: string): Promise<Track | undefined> {
-    return await this.dataStoreService.tracks[id];
+  public async hasEntityByID(id: string): Promise<boolean> {
+    return await !!this.dataStoreService.tracks[id];
   }
 }
