@@ -1,4 +1,5 @@
 import { IsString, IsNotEmpty } from 'class-validator';
+import { Exclude } from 'class-transformer';
 
 class CreateUserDto {
   @IsNotEmpty()
@@ -8,6 +9,21 @@ class CreateUserDto {
   @IsNotEmpty()
   @IsString()
   password: string;
+}
+
+class UserEntity {
+  id: string;
+  version: number;
+  createdAt: number;
+  updatedAt: number;
+  login: string;
+
+  @Exclude()
+  password: string;
+
+  constructor(partial: Partial<UserEntity>) {
+    Object.assign(this, partial);
+  }
 }
 
 class UpdatePasswordDto {
@@ -20,4 +36,4 @@ class UpdatePasswordDto {
   newPassword: string; // new password
 }
 
-export { CreateUserDto, UpdatePasswordDto }
+export { CreateUserDto, UpdatePasswordDto, UserEntity }

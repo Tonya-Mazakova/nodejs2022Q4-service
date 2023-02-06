@@ -1,16 +1,23 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DataSourceService } from '../dataSource/dataSource.service';
 import { Artist } from './artists.interface';
 import { v4 as uuid } from 'uuid';
 import { ErrorMessages } from '../constants';
 import { Track } from '../tracks/tracks.interface';
 import { TracksService } from '../tracks/tracks.service';
+import { FavoritesService } from '../favorites/favorites.service';
+import { AlbumsService } from '../albums/albums.service';
+import { Album } from '../albums/albums.interface';
 
 @Injectable()
 export class ArtistsService {
   constructor(
     private readonly dataStoreService: DataSourceService,
-    private readonly tracksService: TracksService
+    @Inject(forwardRef(() => TracksService))
+    private readonly tracksService: TracksService,
+    @Inject(forwardRef(() => FavoritesService))
+    private readonly favoritesService: FavoritesService,
+    private readonly albumsService: AlbumsService
   ) {}
 
   public async findAll(): Promise<Artist[]> {
@@ -70,14 +77,29 @@ export class ArtistsService {
     }
 
     (await this.tracksService.findAll())
-      .map((track: Track) => {
+      .forEach(async (track: Track) => {
         if (track.artistId === id) {
-          track.artistId = null
+          track.artistId = null;
+          await this.tracksService.updateByID(track.id, track)
         }
-
-        return track
       });
 
+    (await this.albumsService.findAll())
+      .forEach(async (album: Album) => {
+        if (album.artistId === id) {
+          album.artistId = null
+          await this.albumsService.updateByID(album.id, album)
+        }
+      });
+
+    if (await this.favoritesService.isFavHasId(id, 'artists')) {
+      await this.favoritesService.delete(id, 'artists');
+    }
+
     return delete this.dataStoreService.artists[id]
+  }
+
+  public async hasEntityByID(id: string): Promise<Artist | undefined> {
+    return await this.dataStoreService.artists[id];
   }
 }

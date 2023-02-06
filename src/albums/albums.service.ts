@@ -1,18 +1,20 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Inject, forwardRef } from '@nestjs/common';
 import { DataSourceService } from '../dataSource/dataSource.service';
-import { ArtistsService } from '../artists/artists.service';
 import { Album } from './albums.interface';
 import { v4 as uuid } from 'uuid';
 import { ErrorMessages } from '../constants';
-import { User } from '../users/users.interface';
 import { TracksService } from '../tracks/tracks.service';
 import { Track } from '../tracks/tracks.interface';
+import { FavoritesService } from '../favorites/favorites.service';
 
 @Injectable()
 export class AlbumsService {
   constructor(
     private readonly dataStoreService: DataSourceService,
-    private readonly tracksService: TracksService
+    @Inject(forwardRef(() => TracksService))
+    private readonly tracksService: TracksService,
+    @Inject(forwardRef(() => FavoritesService))
+    private readonly favoritesService: FavoritesService,
   ) {}
 
   public async findAll(): Promise<Album[]> {
@@ -38,9 +40,9 @@ export class AlbumsService {
         ErrorMessages.NOT_FOUND,
         HttpStatus.NOT_FOUND
       );
-    } else {
-      return album
     }
+
+    return album
   }
 
   public async updateByID(id: string, data: any): Promise<any> {
@@ -71,17 +73,24 @@ export class AlbumsService {
         ErrorMessages.NOT_FOUND,
         HttpStatus.NOT_FOUND
       );
-    } else {
-      (await this.tracksService.findAll())
-        .map((track: Track) => {
-          if (track.albumId === id) {
-            track.albumId = null
-          }
-
-          return track
-        });
-
-      return delete this.dataStoreService.albums[id];
     }
+
+    (await this.tracksService.findAll())
+      .forEach(async (track: Track) => {
+        if (track.albumId === id) {
+          track.albumId = null
+          await this.tracksService.updateByID(track.id, track)
+        }
+      });
+
+    if (await this.favoritesService.isFavHasId(id, 'albums')) {
+      await this.favoritesService.delete(id, 'albums');
+    }
+
+    return delete this.dataStoreService.albums[id];
+  }
+
+  public async hasEntityByID(id: string): Promise<Album | undefined> {
+    return await this.dataStoreService.albums[id];
   }
 }

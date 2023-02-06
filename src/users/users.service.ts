@@ -3,6 +3,7 @@ import { DataSourceService } from '../dataSource/dataSource.service';
 import { User } from './users.interface';
 import { v4 as uuid } from 'uuid';
 import { ErrorMessages } from '../constants';
+import { UserEntity } from './users.dto';
 
 @Injectable()
 export class UsersService {
@@ -23,7 +24,7 @@ export class UsersService {
 
     this.dataStoreService.users[user.id] = user;
 
-    return user
+    return new UserEntity(user)
   }
 
   public async findByID(id: string): Promise<any> {
@@ -65,7 +66,7 @@ export class UsersService {
       updatedAt: Date.now()
     };
 
-    return this.dataStoreService.users[id]
+    return new UserEntity(this.dataStoreService.users[id])
   }
 
   public async deleteByID(id: string): Promise<boolean | HttpException> {
@@ -76,8 +77,8 @@ export class UsersService {
         ErrorMessages.NOT_FOUND,
         HttpStatus.NOT_FOUND
       );
-    } else {
-      return delete this.dataStoreService.users[id];
     }
+
+    return delete this.dataStoreService.users[id];
   }
 }

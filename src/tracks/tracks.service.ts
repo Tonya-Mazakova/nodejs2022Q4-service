@@ -1,17 +1,16 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DataSourceService } from '../dataSource/dataSource.service';
-import { ArtistsService } from '../artists/artists.service';
 import { Track } from './tracks.interface';
 import { v4 as uuid } from 'uuid';
 import { ErrorMessages } from '../constants';
-import { User } from '../users/users.interface';
-import { AlbumsService } from '../albums/albums.service';
+import { FavoritesService } from '../favorites/favorites.service';
 
 @Injectable()
 export class TracksService {
   constructor(
     private readonly dataStoreService: DataSourceService,
-    // private readonly artistsService: ArtistsService
+    @Inject(forwardRef(() => FavoritesService))
+    private readonly favoritesService: FavoritesService,
   ) {}
 
   public async findAll(): Promise<Track[]> {
@@ -36,10 +35,11 @@ export class TracksService {
         ErrorMessages.NOT_FOUND,
         HttpStatus.NOT_FOUND
       );
-    } else {
-      return track
     }
+
+    return track
   }
+
 
   public async updateByID(id: string, data: any): Promise<any> {
     const isExist = await this.findByID(id) as Track;
@@ -69,8 +69,16 @@ export class TracksService {
         ErrorMessages.NOT_FOUND,
         HttpStatus.NOT_FOUND
       );
-    } else
-
-      return delete this.dataStoreService.tracks[id];
     }
+
+    if (await this.favoritesService.isFavHasId(id, 'tracks')) {
+      await this.favoritesService.delete(id, 'tracks');
+    }
+
+    return delete this.dataStoreService.tracks[id];
+  }
+
+  public async hasEntityByID(id: string): Promise<Track | undefined> {
+    return await this.dataStoreService.tracks[id];
+  }
 }
