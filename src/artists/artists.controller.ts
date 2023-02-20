@@ -13,7 +13,7 @@ import {
   Header
 } from '@nestjs/common';
 import { ArtistsService } from './artists.service';
-import { CreateArtistDto, UpdateArtistDto } from './artists.dto';
+import { CreateArtistDto, UpdateArtistDto } from './dto/artists.dto';
 import { DataSourceService } from '../dataSource/dataSource.service';
 
 @Controller('artist')

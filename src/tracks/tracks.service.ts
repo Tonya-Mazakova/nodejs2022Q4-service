@@ -1,9 +1,11 @@
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DataSourceService } from '../dataSource/dataSource.service';
 import { Track } from './tracks.interface';
-import { v4 as uuid } from 'uuid';
 import { ErrorMessages, DataSourceTypes } from '../constants';
 import { FavoritesService } from '../favorites/favorites.service';
+import { TracksEntity } from './entities/tracks.entity';
+import { DataSource, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class TracksService {
@@ -11,24 +13,27 @@ export class TracksService {
     private readonly dataStoreService: DataSourceService,
     @Inject(forwardRef(() => FavoritesService))
     private readonly favoritesService: FavoritesService,
+    private dataSource: DataSource,
+    @InjectRepository(TracksEntity)
+    private tracksRepo: Repository<TracksEntity>
   ) {}
 
   public async findAll(): Promise<Track[]> {
-    return Object.values(this.dataStoreService.tracks)
+    return this.tracksRepo.find();
   }
 
   public async create(data): Promise<any> {
-    const track = {
-      ...data,
-      id: uuid(),
-    } as Track;
+    const track = new TracksEntity();
+    track.albumId = data.albumId;
+    track.artistId = data.artistId;
+    track.duration = data.duration;
+    track.name = data.name;
 
-    this.dataStoreService.tracks[track.id] = track;
-    return track
+    return this.tracksRepo.save(track);
   }
 
   public async findByID(id: string): Promise<any> {
-    const track = await this.dataStoreService.tracks[id];
+    const track = await this.tracksRepo.findOne({ where: { id }});
 
     if (!track) {
       throw new HttpException(
@@ -40,31 +45,30 @@ export class TracksService {
     return track
   }
 
-
   public async updateByID(id: string, data: any): Promise<any> {
-    const isExist = await this.findByID(id) as Track;
+    const track = await this.findByID(id) as Track;
 
-    if (!isExist) {
+    if (!track) {
       throw new HttpException(
         ErrorMessages.NOT_FOUND,
         HttpStatus.NOT_FOUND
       );
     }
 
-    const track = this.dataStoreService.tracks[id] as Track;
+    const result = {...track, ...data};
 
-    this.dataStoreService.tracks[id] = {
-      ...track,
-      ...data
-    };
+    await this.tracksRepo.update(
+      { id },
+      result
+    );
 
-    return this.dataStoreService.tracks[id]
+    return result;
   }
 
-  public async deleteByID(id: string): Promise<boolean | HttpException> {
-    const isExist = await this.findByID(id);
+  public async deleteByID(id: string): Promise<any | HttpException> {
+    const track = await this.findByID(id);
 
-    if (!isExist) {
+    if (!track) {
       throw new HttpException(
         ErrorMessages.NOT_FOUND,
         HttpStatus.NOT_FOUND
@@ -75,10 +79,6 @@ export class TracksService {
       await this.favoritesService.delete(id, DataSourceTypes.Tracks);
     }
 
-    return delete this.dataStoreService.tracks[id];
-  }
-
-  public async hasEntityByID(id: string): Promise<boolean> {
-    return await !!this.dataStoreService.tracks[id];
+    return await this.tracksRepo.delete({ id });
   }
 }

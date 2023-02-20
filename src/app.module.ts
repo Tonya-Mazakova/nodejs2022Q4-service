@@ -7,9 +7,15 @@ import { TracksModule } from './tracks/tracks.module';
 import { ArtistsModule } from './artists/artists.module';
 import { AlbumsModule} from './albums/albums.module';
 import { FavoritesModule } from './favorites/favorites.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { dataSourceOptions } from './dataSource/data-source';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 @Module({
   imports: [
+    TypeOrmModule.forRoot(dataSourceOptions),
     UsersModule,
     TracksModule,
     ArtistsModule,

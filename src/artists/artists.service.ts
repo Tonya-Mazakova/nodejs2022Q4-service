@@ -1,42 +1,44 @@
 import { forwardRef, HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { DataSourceService } from '../dataSource/dataSource.service';
 import { Artist } from './artists.interface';
-import { v4 as uuid } from 'uuid';
 import { ErrorMessages, DataSourceTypes } from '../constants';
 import { Track } from '../tracks/tracks.interface';
 import { TracksService } from '../tracks/tracks.service';
 import { FavoritesService } from '../favorites/favorites.service';
 import { AlbumsService } from '../albums/albums.service';
 import { Album } from '../albums/albums.interface';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { ArtistsEntity } from './entities/artists.entity';
 
 @Injectable()
 export class ArtistsService {
   constructor(
     private readonly dataStoreService: DataSourceService,
-    @Inject(forwardRef(() => TracksService))
-    private readonly tracksService: TracksService,
+    // @Inject(forwardRef(() => TracksService))
+    // private readonly tracksService: TracksService,
     @Inject(forwardRef(() => FavoritesService))
     private readonly favoritesService: FavoritesService,
-    private readonly albumsService: AlbumsService
+    private readonly albumsService: AlbumsService,
+    private dataSource: DataSource,
+    @InjectRepository(ArtistsEntity)
+    private artistsRepo: Repository<ArtistsEntity>
   ) {}
 
   public async findAll(): Promise<Artist[]> {
-    return Object.values(this.dataStoreService.artists)
+    return this.artistsRepo.find();
   }
 
   public async create(data): Promise<any> {
-    const artist = {
-      ...data,
-      id: uuid(),
-    } as Artist;
+    const artist = new ArtistsEntity();
+    artist.grammy = data.grammy;
+    artist.name = data.name;
 
-    this.dataStoreService.artists[artist.id] = artist;
-
-    return artist
+    return this.artistsRepo.save(artist);
   }
 
   public async findByID(id: string): Promise<any> {
-    const artist = await this.dataStoreService.artists[id] as Artist;
+    const artist = await this.artistsRepo.findOne({ where: { id }});
 
     if (!artist) {
       throw new HttpException(
@@ -45,7 +47,7 @@ export class ArtistsService {
       );
     }
 
-    return this.dataStoreService.artists[id]
+    return artist;
   }
 
   public async updateByID(id: string, updatedData: any): Promise<any> {
@@ -58,15 +60,17 @@ export class ArtistsService {
       );
     }
 
-    this.dataStoreService.artists[id] = {
-      ...artist,
-      ...updatedData
-    }
+    const result = {...artist, ...updatedData}
 
-    return this.dataStoreService.artists[id]
+    await this.artistsRepo.update(
+      { id },
+      result
+    );
+
+    return result
   }
 
-  public async deleteByID(id: string): Promise<boolean> {
+  public async deleteByID(id: string): Promise<any> {
     const artist = await this.findByID(id);
 
     if (!artist) {
@@ -76,30 +80,10 @@ export class ArtistsService {
       );
     }
 
-    (await this.tracksService.findAll())
-      .forEach(async (track: Track) => {
-        if (track.artistId === id) {
-          track.artistId = null;
-          await this.tracksService.updateByID(track.id, track)
-        }
-      });
-
-    (await this.albumsService.findAll())
-      .forEach(async (album: Album) => {
-        if (album.artistId === id) {
-          album.artistId = null
-          await this.albumsService.updateByID(album.id, album)
-        }
-      });
-
     if (await this.favoritesService.isAddedInFavs(id, DataSourceTypes.Artists)) {
       await this.favoritesService.delete(id, DataSourceTypes.Artists);
     }
 
-    return delete this.dataStoreService.artists[id]
-  }
-
-  public async hasEntityByID(id: string): Promise<boolean> {
-    return await !!this.dataStoreService.artists[id];
+    return await this.artistsRepo.delete({ id })
   }
 }

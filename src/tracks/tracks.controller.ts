@@ -12,7 +12,7 @@ import {
   Put
 } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
-import { CreateTrackDto, UpdateTrackDto } from './tracks.dto';
+import { CreateTrackDto, UpdateTrackDto } from './dto/tracks.dto';
 import { Track } from './tracks.interface';
 import { TracksService } from './tracks.service';
 

@@ -16,8 +16,8 @@ import {
 import { DataSourceService } from '../dataSource/dataSource.service';
 import { AlbumsService } from './albums.service';
 import { Artist } from '../artists/artists.interface';
-import { CreateArtistDto } from '../artists/artists.dto';
-import { CreateAlbumDto, UpdateAlbumDto } from './albums.dto';
+import { CreateArtistDto } from '../artists/dto/artists.dto';
+import { CreateAlbumDto, UpdateAlbumDto } from './dto/albums.dto';
 import { ErrorMessages } from '../constants';
 import { Album } from './albums.interface';
 

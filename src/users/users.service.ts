@@ -1,34 +1,33 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { DataSource, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { DataSourceService } from '../dataSource/dataSource.service';
 import { User } from './users.interface';
-import { v4 as uuid } from 'uuid';
 import { ErrorMessages } from '../constants';
-import { UserEntity } from './users.dto';
+import { UserEntity } from './entities/user.entity';
+import { CreateUserDto, UpdatePasswordDto } from './dto/users.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly dataStoreService: DataSourceService) {}
+  constructor(
+    private readonly dataStoreService: DataSourceService,
+    private dataSource: DataSource,
+    @InjectRepository(UserEntity)
+    private userRepo: Repository<UserEntity>
+  ) {}
 
   public async findAll(): Promise<any[]> {
-    return Object.values(this.dataStoreService.users)
+    return this.userRepo.find();
   }
 
-  public async create(data): Promise<any> {
-    const user = {
-      ...data,
-      id: uuid(),
-      version: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    } as User;
+  public async create(data: CreateUserDto): Promise<any> {
+    const user = new UserEntity(data);
 
-    this.dataStoreService.users[user.id] = user;
-
-    return new UserEntity(user)
+    return this.userRepo.save(user);
   }
 
   public async findByID(id: string): Promise<any> {
-    const user = await this.dataStoreService.users[id];
+    const user = await this.userRepo.findOne({ where: { id }});
 
     if (!user) {
       throw new HttpException(
@@ -40,7 +39,7 @@ export class UsersService {
     }
   }
 
-  public async updateByID(id: string, { newPassword, oldPassword }: any): Promise<any> {
+  public async updateByID(id: string, { newPassword, oldPassword }: UpdatePasswordDto): Promise<any> {
     const user = await this.findByID(id) as User;
 
     if (!user) {
@@ -57,19 +56,23 @@ export class UsersService {
       );
     }
 
-    const data = this.dataStoreService.users[id] as User;
-
-    this.dataStoreService.users[id] = {
-      ...data,
+    const result = {
+      ...user,
       password: newPassword,
-      version: ++data.version,
-      updatedAt: Date.now()
+      version: ++user.version,
+      updatedAt: Date.now().valueOf()
     };
 
-    return new UserEntity(this.dataStoreService.users[id])
+    await this.userRepo.update(
+      { id },
+      result
+    );
+
+    return new UserEntity(result);
   }
 
-  public async deleteByID(id: string): Promise<boolean | HttpException> {
+
+  public async deleteByID(id: string): Promise<any | HttpException> {
     const user = await this.findByID(id);
 
     if (!user) {
@@ -79,6 +82,6 @@ export class UsersService {
       );
     }
 
-    return delete this.dataStoreService.users[id];
+    return !!(await this.userRepo.remove(user));
   }
 }
