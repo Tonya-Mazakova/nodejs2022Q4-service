@@ -2,10 +2,7 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
   VersionColumn,
-  BeforeUpdate
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
@@ -24,18 +21,34 @@ export class UserEntity {
   @VersionColumn()
   version!: number;
 
-  @CreateDateColumn({
-    type: "timestamp",
-    default: () => "CURRENT_TIMESTAMP(6)"
-  })
-  createdAt: Date;
+  @Column('bigint',
+    {
+      default: +(Date.now().valueOf()),
+      transformer: {
+        to() {
+          return new Date().valueOf();
+        },
+        from(value) {
+          return +value;
+        }
+      },
+    },
+  )
+  createdAt: number;
 
-  @UpdateDateColumn({
-    type: "timestamp",
-    default: () => "CURRENT_TIMESTAMP(6)",
-    onUpdate: "CURRENT_TIMESTAMP(6)"
-  })
-  updatedAt: Date;
+  @Column('bigint',
+    {
+      default: +(Date.now().valueOf()),
+      transformer: {
+        to(value) {
+          return value ? +value : new Date().valueOf();
+        },
+        from(value) {
+          return +value;
+        }
+      },
+    })
+  updatedAt: number;
 
   constructor(args) {
     Object.assign(this, args)

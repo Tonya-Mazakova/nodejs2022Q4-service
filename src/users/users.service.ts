@@ -5,6 +5,7 @@ import { DataSourceService } from '../dataSource/dataSource.service';
 import { User } from './users.interface';
 import { ErrorMessages } from '../constants';
 import { UserEntity } from './entities/user.entity';
+import { CreateUserDto, UpdatePasswordDto } from './dto/users.dto';
 
 @Injectable()
 export class UsersService {
@@ -19,7 +20,7 @@ export class UsersService {
     return this.userRepo.find();
   }
 
-  public async create(data): Promise<any> {
+  public async create(data: CreateUserDto): Promise<any> {
     const user = new UserEntity(data);
 
     return this.userRepo.save(user);
@@ -38,7 +39,7 @@ export class UsersService {
     }
   }
 
-  public async updateByID(id: string, { newPassword, oldPassword }: any): Promise<any> {
+  public async updateByID(id: string, { newPassword, oldPassword }: UpdatePasswordDto): Promise<any> {
     const user = await this.findByID(id) as User;
 
     if (!user) {
@@ -58,8 +59,8 @@ export class UsersService {
     const result = {
       ...user,
       password: newPassword,
-      updatedAt: new Date(),
-      version: ++user.version
+      version: ++user.version,
+      updatedAt: +(Date.now().valueOf())
     };
 
     await this.userRepo.update(

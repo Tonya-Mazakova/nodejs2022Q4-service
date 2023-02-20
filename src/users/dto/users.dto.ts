@@ -14,8 +14,8 @@ class CreateUserDto {
 class UserEntity {
   id: string;
   version: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: number;
+  updatedAt: number;
   login: string;
 
   @Exclude()
