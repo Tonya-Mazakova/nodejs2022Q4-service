@@ -22,7 +22,11 @@
     "docker-compose:build": "docker-compose build --no-cache",
     "docker-compose:start": "docker-compose up --build --force-recreate",
     "docker-compose:stop": "docker-compose down -v",
-    "docker:scan": "docker scan nestjs-app & docker scan postgres:15.2"
+    "docker:scan": "docker scan nestjs-app & docker scan postgres:15.2",
+    "typeorm": "npm run build && npx typeorm -d dist/dataSource/data-source.js",
+    "migration:generate": "npm run typeorm -- migration:generate src/dataSource/migrations/init",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert"
   },
   "dependencies": {
     "@nestjs/common": "^9.3.8",

@@ -13,7 +13,7 @@ import { AlbumsEntity } from '../albums/entities/albums.entity';
 import { ArtistsEntity } from '../artists/entities/artists.entity';
 
 @Injectable()
-export class FavoritesService {
+export class FavoritesService implements OnModuleInit {
   constructor(
     private readonly dataStoreService: DataSourceService,
     @Inject(forwardRef(() => TracksService))
@@ -31,7 +31,7 @@ export class FavoritesService {
     private albumsRepo: Repository<AlbumsEntity>,
     @InjectRepository(ArtistsEntity)
     private artistsRepo: Repository<ArtistsEntity>
-  ) { }
+  ) {}
 
   async onModuleInit() {
     await this.initFavsRepo()

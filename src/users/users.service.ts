@@ -60,7 +60,7 @@ export class UsersService {
       ...user,
       password: newPassword,
       version: ++user.version,
-      updatedAt: +(Date.now().valueOf())
+      updatedAt: Date.now().valueOf()
     };
 
     await this.userRepo.update(
