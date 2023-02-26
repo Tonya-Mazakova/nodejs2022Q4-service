@@ -39,6 +39,19 @@ export class UsersService {
     }
   }
 
+  public async findByQuery(key: string, value: string | number): Promise<any> {
+    const user = await this.userRepo.findOne({ where: { [key]: value } });
+
+    if (!user) {
+      throw new HttpException(
+        ErrorMessages.NOT_FOUND,
+        HttpStatus.NOT_FOUND
+      );
+    } else {
+      return user
+    }
+  }
+
   public async updateByID(id: string, { newPassword, oldPassword }: UpdatePasswordDto): Promise<any> {
     const user = await this.findByID(id) as User;
 

@@ -5,6 +5,7 @@ import { AlbumsEntity } from '../albums/entities/albums.entity';
 import { ArtistsEntity } from '../artists/entities/artists.entity';
 import { TracksEntity } from '../tracks/entities/tracks.entity';
 import { FavoritesEntity } from '../favorites/entities/favorites.entity';
+import { TokenEntity } from '../auth/tokens/entities/token.entity';
 
 dotenv.config();
 
@@ -24,7 +25,8 @@ export const dataSourceOptions: DataSourceOptions = {
     AlbumsEntity,
     TracksEntity,
     ArtistsEntity,
-    FavoritesEntity
+    FavoritesEntity,
+    TokenEntity
   ],
   migrations: ['dist/dataSource/migrations/*.js'],
   migrationsRun: true
