@@ -18,6 +18,7 @@ export const dataSourceOptions: DataSourceOptions = {
   synchronize: false,
   logging: true,
   // entities: [__dirname + '/**/*.entity{.ts,.js}'],
+  // entities: ['dist/**/entity/*.js'],
   entities: [
     UserEntity,
     AlbumsEntity,
