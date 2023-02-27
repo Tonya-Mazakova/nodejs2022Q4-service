@@ -55,7 +55,7 @@ export class LoggerService implements LoggerServiceCommon {
 
       if (err) isFileExist = false;
 
-      if (isFileExist && (await this.fileSize(this.logFileName) >= this.logFileMaxSizeInBytes)) {
+      if (isFileExist && (await this.fileSize(this.logFileName) > this.logFileMaxSizeInBytes)) {
         this.logFileName = `log_${new Date().valueOf()}.txt`;
       }
 
