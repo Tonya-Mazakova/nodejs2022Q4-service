@@ -5,9 +5,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: prod
-#    volumes:
-#      - .:/src
+      target: dev
+    volumes:
+      - .:/src
+      - /src/node_modules
     env_file:
       - .env
     ports:
